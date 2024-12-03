@@ -10,7 +10,7 @@
 
 Скриншоты:
 
-![image 1](./hw1/server_screenshot1.png)
-![image 2](./hw1/server_screenshot2.png)
-![image 3](./hw1/server_screenshot3.png)
+![image 1](./server_screenshot1.png)
+![image 2](./server_screenshot2.png)
+![image 3](./server_screenshot3.png)
 
