@@ -21,7 +21,6 @@ app = FastAPI()
 class Item(BaseModel):
     name: str
     year: int
-    selling_price: int
     km_driven: int
     fuel: str
     seller_type: str
@@ -71,7 +70,11 @@ def extract_torque(torque_string):
 
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
-    df['torque_nm'], df['max_torque_rpm'] = extract_torque(df['torque'])
+    df['mileage'] = df['mileage'].str.replace(' kmpl', '').str.replace(' km/kg', '').astype(float)
+    df['engine'] = df['engine'].str.replace(' CC', '').astype(float)
+    df['max_power'] = pd.to_numeric(df['max_power'].str.replace(' bhp', ''), errors='coerce').astype(float)
+
+    df['torque_nm'], df['max_torque_rpm'] = zip(*df['torque'].apply(extract_torque))
     df = df.drop(columns=['torque'])
     df['name'] = df['name'].apply(lambda x: x.split(' ')[0])
     df['torque_nm'] = pd.to_numeric(df['torque_nm'], errors='coerce')
@@ -89,16 +92,4 @@ def predict_item(item: Item) -> float:
     df_instance = pydantic_model_to_df(item)
     preprocessed_data = preprocess_data(df_instance)
     prediction = model.predict(preprocessed_data).tolist()[0]
-
-    response = item.model_dump(by_alias=True)
-    response.update({'Prediction': prediction})
-    return response
-
-
-@app.post("/predict_items")
-def predict_items(items: List[Item]) -> List[float]:
-    df_instances = pd.DataFrame([jsonable_encoder(item) for item in items])
-    preprocessed_data = preprocess_data(df_instances)
-    predictions = model.predict(preprocessed_data).tolist()
-    return [{**item.model_dump(by_alias=True), 'Prediction': prediction} for item, prediction in zip(items, predictions)]
-
+    return prediction
